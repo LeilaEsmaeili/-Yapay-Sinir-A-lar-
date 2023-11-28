@@ -1,0 +1,42 @@
+import numpy as np
+from tensorflow import keras
+from keras.datasets import mnist
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.utils import to_categorical
+
+# بارگذاری داده‌های MNIST
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+# نرمال‌سازی و تبدیل داده‌ها به فرمت مناسب برای ورودی شبکه عصبی
+x_train = x_train.reshape((60000, 784)).astype('float32') / 255
+x_test = x_test.reshape((10000, 784)).astype('float32') / 255
+ 
+# تبدیل برچسب‌ها به فرمت one-hot encoding
+y_train = to_categorical(y_train, 10)
+y_test = to_categorical(y_test, 10) 
+
+# تابع برای ساخت مدل MLP
+def build_model(hidden_layers, neurons):
+    model = Sequential()
+    model.add(Dense(neurons, activation='relu', input_shape=(784,)))
+    for _ in range(hidden_layers - 1):
+        model.add(Dense(neurons, activation='relu'))
+    model.add(Dense(10, activation='softmax'))
+    return model
+
+# ایجاد و آموزش سه مدل MLP با پارامترهای مختلف
+models = []
+for i, (layers, neurons) in enumerate([(1, 32), (2, 64), (3, 128)]):
+    model = build_model(hidden_layers=layers, neurons=neurons)
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    print(f"Training model {i+1} with {layers} hidden layers and {neurons} neurons each.")
+    history = model.fit(x_train, y_train, epochs=10, validation_data=(x_test, y_test), verbose=1)
+    models.append((model, history))
+
+# در این قسمت شما می‌توانید نتایج دقت هر مدل را مشاهده و مقایسه کنید
+for i, (model, history) in enumerate(models):
+    test_accuracy = model.evaluate(x_test, y_test, verbose=0)[1]
+    print(f"Model {i+1} Accuracy: {test_accuracy:.4f}")
+
+
